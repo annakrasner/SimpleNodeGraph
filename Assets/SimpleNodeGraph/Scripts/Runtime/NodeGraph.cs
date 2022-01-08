@@ -37,6 +37,7 @@ namespace SimpleNodeGraph
                 RemoveConnection(c);
             }
             nodes.Remove(n);
+            DestroyImmediate(n, true);
         }    
 
 
@@ -44,6 +45,7 @@ namespace SimpleNodeGraph
         {
             c.Clear();
             connections.Remove(c);
+            c.Dispose();
         }
 
         [ContextMenu("RUN")]

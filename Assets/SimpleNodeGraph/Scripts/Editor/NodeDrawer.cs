@@ -22,13 +22,14 @@ namespace SimpleNodeGraph
         public List<PinDrawer> pinDrawers;
 
         public Action<NodeDrawer> onRemoveNode;
+        public Action<NodeDrawer> onCopyNode;
         protected Action<PinDrawer> pinClickCallback;
 
         protected SerializedObject so;
 
         public NodeDrawer() { }
         public NodeDrawer(Node target, Vector2 position, float width, float height, 
-            Action<PinDrawer> pinClickCallback, Action<NodeDrawer> nodeRemoveCallback)
+            Action<PinDrawer> pinClickCallback, Action<NodeDrawer> nodeRemoveCallback, Action<NodeDrawer> nodeCopyCallback)
         {
             this.target = target;
             
@@ -36,6 +37,7 @@ namespace SimpleNodeGraph
             rect = new Rect(position.x, position.y, width, height);
             this.pinClickCallback = pinClickCallback;
             onRemoveNode = nodeRemoveCallback;
+            onCopyNode = nodeCopyCallback;
 
             TitleAttribute titleAttr = Attribute.GetCustomAttribute(target.GetType(), typeof(TitleAttribute)) as TitleAttribute;
             if (titleAttr != null)
@@ -59,7 +61,6 @@ namespace SimpleNodeGraph
           
             so = new SerializedObject(target);
 
-            int pinCt = 0;
             var prop_it = so.GetIterator();
             float neededHeight = EditorGUIUtility.singleLineHeight * 4 + 3f;
             while (prop_it.NextVisible(true))
@@ -211,7 +212,8 @@ namespace SimpleNodeGraph
 
         public void DragFinished()
         {
-            target.graphPosition = rect.position;
+            so.FindProperty("graphPosition").vector2Value = rect.position;
+            so.ApplyModifiedProperties();
 
         }
 
@@ -257,6 +259,13 @@ namespace SimpleNodeGraph
                         return true;
                     }
                     break;
+                case EventType.KeyUp:
+                    if(e.keyCode == KeyCode.Delete && isSelected)
+                    {
+                        OnClickRemoveNode();
+                        GUI.changed = true;
+                    }
+                    break;
             }
 
             return false;
@@ -266,18 +275,24 @@ namespace SimpleNodeGraph
         {
             var genericMenu = new GenericMenu();
             genericMenu.AddItem(new GUIContent("Remove node"), false, OnClickRemoveNode);
+            genericMenu.AddItem(new GUIContent("Copy node"), false, OnClickCopyNode);
             CreateContextMenu(genericMenu);
             genericMenu.ShowAsContext();
         }
 
         protected virtual void CreateContextMenu(GenericMenu menu)
         {
-
         }
 
         private void OnClickRemoveNode()
         {
             onRemoveNode?.Invoke(this);
+        }
+
+        private void OnClickCopyNode()
+        {
+            onCopyNode?.Invoke(this);
+
         }
 
 

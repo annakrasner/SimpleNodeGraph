@@ -18,6 +18,9 @@ namespace SimpleNodeGraph
         private PinDrawer lastSelectedPinDrawer;
         private PinDrawer curSelectedPinDrawer;
 
+        private Node nodeClipboard;
+        public Vector2 nodePasteOffset = new Vector2(10, 10);
+
         private Vector2 drag;
         private Vector2 offset;
         private float zoomScrollVal = 0;
@@ -74,7 +77,7 @@ namespace SimpleNodeGraph
                 if (n != null)
                 {
                     n.Init(targetNodeGraph);
-                    nodeDrawers.Add(CreateNodeDrawer(n, n.graphPosition, NodeGraphStyles.nodeWidth, NodeGraphStyles.nodeHeight, OnPinClick, OnClickRemoveNode));
+                    nodeDrawers.Add(CreateNodeDrawer(n, n.graphPosition, NodeGraphStyles.nodeWidth, NodeGraphStyles.nodeHeight, OnPinClick, OnClickRemoveNode, OnClickCopyNode));
                 }
 
 
@@ -242,9 +245,24 @@ namespace SimpleNodeGraph
                     GUI.changed = true;
                     break;
 
+                case EventType.KeyUp:
+                    if(e.keyCode == KeyCode.Space)
+                    {
+                        ProcessNodeSearchWindow(e.mousePosition);
+
+                    }
+                    break;
             }
         }
 
+
+        private void ProcessNodeSearchWindow(Vector2 mousePosition)
+        {
+            NodeSearchPopupEditor.Init(mousePosition + position.position, GetNodes(), (Type nodeType) =>
+            {
+                OnClickAddNode(mousePosition, nodeType);
+            });
+        }
 
         private void ProcessContextMenu(Vector2 mousePosition)
         {
@@ -264,6 +282,18 @@ namespace SimpleNodeGraph
                 {
                     OnClickAddNode(mousePosition, nodeType);
                 });
+
+                if(nodeClipboard != null)
+                {
+                    genericMenu.AddItem(new GUIContent("Paste Node"), false, () =>
+                    {
+                        OnClickPasteNode(mousePosition);
+                    });
+                }
+                else
+                {
+                    genericMenu.AddDisabledItem(new GUIContent("Paste Node"));
+                }
             }
             genericMenu.ShowAsContext();
         }
@@ -322,18 +352,7 @@ namespace SimpleNodeGraph
         }
 
 
-        protected void OnClickAddNode(Vector2 mousePosition, System.Type type)
-        {
-            if(nodeDrawers == null)
-            {
-                nodeDrawers = new List<NodeDrawer>();
-            }
 
-            Node newNode = CreateNodeFromUI(mousePosition, type);
-            CreateAndAddNodeDrawer(newNode, mousePosition);
-           
-
-        }
 
 
         private void OnPinClick(PinDrawer pin)
@@ -365,13 +384,49 @@ namespace SimpleNodeGraph
         {
             targetNodeGraph.RemoveConnection(connection.target);
             connectionDrawers.Remove(connection);
+            EditorUtility.SetDirty(targetNodeGraph);
+
+        }
+
+        protected void OnClickAddNode(Vector2 mousePosition, System.Type type)
+        {
+            if (nodeDrawers == null)
+            {
+                nodeDrawers = new List<NodeDrawer>();
+            }
+
+            Node newNode = CreateNodeFromUI(mousePosition, type);
+            CreateAndAddNodeDrawer(newNode, mousePosition);
+
+
         }
 
         private void OnClickRemoveNode(NodeDrawer nodeDrawer)
         {
-            targetNodeGraph.RemoveNode(nodeDrawer.target);
             connectionDrawers.RemoveAll(item => nodeDrawer.pinDrawers.Contains(item.inPin) || nodeDrawer.pinDrawers.Contains(item.outPin));
+            AssetDatabase.RemoveObjectFromAsset(nodeDrawer.target);
+            targetNodeGraph.RemoveNode(nodeDrawer.target);
             nodeDrawers.Remove(nodeDrawer);
+          //  AssetDatabase.SaveAssets();
+        }
+
+        private void OnClickCopyNode(NodeDrawer nodeDrawer)
+        {
+            nodeClipboard = CloneNode(nodeDrawer.target, nodeDrawer.target.GetType());
+        }
+
+        private void OnClickPasteNode(Vector2 mousePosition)
+        {
+            if (nodeClipboard != null)
+            {
+
+                nodeClipboard.graphPosition = mousePosition;
+                nodeClipboard.Init(targetNodeGraph);
+                AssetDatabase.AddObjectToAsset(nodeClipboard, targetNodeGraph);
+                CreateAndAddNodeDrawer(nodeClipboard, nodeClipboard.graphPosition);
+            }
+
+            nodeClipboard = null;
         }
 
         protected virtual bool CheckPinsCompatible(PinDrawer pin1, PinDrawer pin2)
@@ -422,9 +477,9 @@ namespace SimpleNodeGraph
         }
 
         protected virtual NodeDrawer CreateNodeDrawer(Node target, Vector2 position, float width, float height,
-    Action<PinDrawer> pinClickCallback, Action<NodeDrawer> nodeRemoveCallback)
+    Action<PinDrawer> pinClickCallback, Action<NodeDrawer> nodeRemoveCallback, Action<NodeDrawer> nodeCopyCallback)
         {
-            var result = new NodeDrawer(target, position, width, height, pinClickCallback, nodeRemoveCallback);
+            var result = new NodeDrawer(target, position, width, height, pinClickCallback, nodeRemoveCallback, nodeCopyCallback);
             return result;
         }
 
@@ -436,19 +491,29 @@ namespace SimpleNodeGraph
                 var obj = ScriptableObject.CreateInstance(type.Name);
                 var node = obj as Node;
                 node.Init(targetNodeGraph);
+                node.graphPosition = position;
 
-                AssetDatabase.AddObjectToAsset(node, targetNodeGraph); 
-
+                AssetDatabase.AddObjectToAsset(node, targetNodeGraph);
+               // AssetDatabase.SaveAssets();
                 return node;
             }
             return null;
+        }
+
+        private Node CloneNode(Node source, System.Type nodeType)
+        {
+            string data = JsonUtility.ToJson(source);
+
+            var result =  ScriptableObject.CreateInstance(nodeType.Name);
+            JsonUtility.FromJsonOverwrite(data, result);
+            return result as Node;
         }
 
         protected void CreateAndAddNodeDrawer(Node newNode, Vector2 mousePosition)
         {
             if (newNode != null)
             {
-                nodeDrawers.Add(CreateNodeDrawer(newNode, mousePosition, 200, 100,  OnPinClick, OnClickRemoveNode));
+                nodeDrawers.Add(CreateNodeDrawer(newNode, mousePosition, 200, 100,  OnPinClick, OnClickRemoveNode, OnClickCopyNode));
                 targetNodeGraph.AddNode(newNode);
 
                 EditorUtility.SetDirty(targetNodeGraph);

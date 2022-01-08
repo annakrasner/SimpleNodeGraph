@@ -17,7 +17,8 @@ namespace SimpleNodeGraph
 
         protected List<Pin> pinCache;
 
-        [HideInInspector]
+        //[HideInInspector]
+        [SerializeField]
         public List<Connection> connections = new List<Connection>();
 
         public NodeGraph parent;
@@ -79,12 +80,12 @@ namespace SimpleNodeGraph
 
                     }
 
-                    parent.EndExecution();
+                    //parent.EndExecution();
 
                 }
                 else
                 {
-                    Debug.Log("Nothing connected to node. Ending execution."); //probably need a loop detection if possible
+                    Debug.Log("Nothing connected to node!"); //probably need a loop detection if possible
                 }
             }
 
@@ -166,6 +167,7 @@ namespace SimpleNodeGraph
                 Debug.LogError("Asked for out of range pin!");
             return pinCache[i];
         }
+
     }
 
     public enum PinType { None, 
@@ -216,31 +218,6 @@ namespace SimpleNodeGraph
 
     public class DataPin<T>: Pin
     {   
-        //public virtual T GetValue<T>()
-        //{
-        //    switch (true)
-        //    {
-        //        case true when typeof(T) == typeof(string):
-                    
-        //            break;
-        //        case true when typeof(T) == typeof(int):
-        //            break;
-        //        case true when typeof(T) == typeof(float):
-        //            break;
-        //        case true when typeof(T) == typeof(Vector2):
-        //            break;
-        //        case true when typeof(T) == typeof(Vector3):
-        //            break;
-        //        case true when typeof(T) == typeof(Vector4):
-        //            break;
-        //        case true when typeof(T) == typeof(Color):
-        //            break;
-        //        case true when !typeof(T).IsValueType:
-        //            break;
-
-
-        //    }
-        //}
     }
 
     [System.Serializable]
@@ -286,7 +263,7 @@ namespace SimpleNodeGraph
     }
 
     [System.Serializable]
-    public class Connection
+    public class Connection : IDisposable
     {
         [SerializeField]
         public Node node1;
@@ -313,6 +290,11 @@ namespace SimpleNodeGraph
         {
             node1.connections.Remove(this);
             node2.connections.Remove(this);
+        }
+
+        public void Dispose()
+        {
+
         }
     }
 
