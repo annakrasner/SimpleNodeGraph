@@ -14,5 +14,15 @@ namespace SimpleNodeGraph
             this.title = title;
         }
     }
+
+    public class NodeCategoryAttribute : Attribute
+    {
+        public string category;
+
+        public NodeCategoryAttribute(string cat)
+        {
+            this.category = cat;
+        }
+    }
 }
 

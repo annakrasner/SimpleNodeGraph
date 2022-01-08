@@ -4,25 +4,27 @@ using UnityEngine;
 
 namespace SimpleNodeGraph
 {
-    [System.Serializable, Title("Debug Log")]
-    public class LogNode : Node
+    [System.Serializable, Title("Branch")]
+    [NodeCategory("Action")]
+
+    public class BranchNode : Node
     {
-        [SerializeField]
-        public string message = "LOG NODE FIRED";
 
         [SerializeField, Title("In")]
         public InPin inPin = new InPin();
 
-        [SerializeField, Title("Out")]
-        public OutPin outPin = new OutPin();
+        [SerializeField, Title("True")]
+        public OutPin trueOutPin = new OutPin();
 
-        [SerializeField, Title("String")]
-        public InDataPin<string> inputString = new InDataPin<string>();
+        [SerializeField, Title("False")]
+        public OutPin falseOutPin = new OutPin();
+
+        [SerializeField, Title("Boolean")]
+        public InDataPin<bool> boolInput = new InDataPin<bool>();
 
         protected override void OnEnter()
         {
-            Debug.Log(inputString.Data);
-            OutputPin(outPin);
+            OutputPin(boolInput.Data ? trueOutPin : falseOutPin);
         }
 
         public override void OnTick()

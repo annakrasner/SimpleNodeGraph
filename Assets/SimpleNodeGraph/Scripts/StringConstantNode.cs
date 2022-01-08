@@ -5,6 +5,8 @@ using UnityEngine;
 namespace SimpleNodeGraph
 {
     [Title("String Value")]
+    [NodeCategory("Constants")]
+
     public class StringConstantNode : Node
     {
         [SerializeField, Title("Value")]

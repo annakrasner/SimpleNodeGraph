@@ -5,6 +5,7 @@ using UnityEngine;
 namespace SimpleNodeGraph
 {
     [System.Serializable, Title("Entry")]
+    [NodeCategory("Action")]
     public class EntryNode : Node
     {
         [SerializeField, Title("Out")]

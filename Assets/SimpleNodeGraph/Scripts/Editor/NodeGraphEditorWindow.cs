@@ -10,6 +10,8 @@ namespace SimpleNodeGraph
 {
     public class NodeGraphEditorWindow : EditorWindow
     {
+        private const string BEZIER_KEY = "SimpleNodeGraph_UseBezierConnections";
+
         private List<NodeDrawer> nodeDrawers;
         private List<ConnectionDrawer> connectionDrawers = new List<ConnectionDrawer>();
 
@@ -60,6 +62,7 @@ namespace SimpleNodeGraph
 
         protected void Init(NodeGraph graph)
         {
+            bezierConnections = EditorPrefs.GetBool(BEZIER_KEY);
             guiSkin = EditorGUIUtility.GetBuiltinSkin(editorSkin);
             targetNodeGraph = graph;
             //create nodes accordingly here
@@ -212,7 +215,7 @@ namespace SimpleNodeGraph
                     }
                     break;
                 case EventType.MouseDrag:
-                    if(e.button == 0)
+                    if(e.button == 2)
                     {
                         isDragged = true;
                         OnDrag(e); 
@@ -238,25 +241,37 @@ namespace SimpleNodeGraph
                     zoomScrollVal += e.delta.y * 0.1f;
                     GUI.changed = true;
                     break;
+
             }
         }
 
 
-        protected virtual void ProcessContextMenu(Vector2 mousePosition)
+        private void ProcessContextMenu(Vector2 mousePosition)
         {
             GenericMenu genericMenu = new GenericMenu();
-            foreach(var nodeType in NodeProvider.GetNodesOfBaseClass<Node>())
+            foreach (var nodeType in GetNodes())
             {
-                genericMenu.AddItem(new GUIContent(nodeType.Name), false, () =>
+                string cat = "";
+                string title = nodeType.Name;
+                NodeCategoryAttribute catAttr = Attribute.GetCustomAttribute(nodeType, typeof(NodeCategoryAttribute)) as NodeCategoryAttribute;
+                if (catAttr != null && !string.IsNullOrEmpty(catAttr.category))
+                    cat = catAttr.category + "/";
+                TitleAttribute titleAttr = Attribute.GetCustomAttribute(nodeType, typeof(TitleAttribute)) as TitleAttribute;
+                if (titleAttr != null && !string.IsNullOrEmpty(titleAttr.title))
+                    title = titleAttr.title;
+
+                genericMenu.AddItem(new GUIContent("Create Node/" + cat + title), false, () =>
                 {
                     OnClickAddNode(mousePosition, nodeType);
                 });
             }
-          
             genericMenu.ShowAsContext();
         }
 
-       
+       protected virtual List<Type> GetNodes()
+        {
+            return NodeProvider.GetNodesOfBaseClass<Node>();
+        }
 
         private void ProcessNodeEvents(Event e)
         {
@@ -487,6 +502,7 @@ namespace SimpleNodeGraph
             GUI.Box(rect, "", guiSkin.box);
             EditorGUILayout.BeginHorizontal();
             bezierConnections = EditorGUILayout.Toggle("Use Bezier", bezierConnections);
+            EditorPrefs.SetBool(BEZIER_KEY, bezierConnections);
             if(GUILayout.Button("Reset Zoom"))
             {
                 zoomScrollVal = 0;

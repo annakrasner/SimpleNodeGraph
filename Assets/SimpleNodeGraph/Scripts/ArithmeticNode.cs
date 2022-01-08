@@ -5,6 +5,7 @@ using UnityEngine;
 namespace SimpleNodeGraph
 {
     [Title("Arithmetic")]
+    [NodeCategory("Math")]
     public class ArithmeticNode : Node
     {
         public enum ArithmeticFunction

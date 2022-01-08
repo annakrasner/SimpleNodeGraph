@@ -5,6 +5,8 @@ using UnityEngine;
 namespace SimpleNodeGraph
 {
     [System.Serializable, Title("Wait for Seconds")]
+    [NodeCategory("Action")]
+
     public class WaitNode : Node
     {
 
@@ -17,8 +19,6 @@ namespace SimpleNodeGraph
         [SerializeField, Title("Time")]
         public InDataPin<float> waitTimeInput = new InDataPin<float>();
 
-        [SerializeField]
-        public float waitTime = 1.5f;
 
         float timeOut;
 

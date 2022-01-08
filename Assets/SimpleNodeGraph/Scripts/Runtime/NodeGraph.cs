@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace SimpleNodeGraph
 {
-    [CreateAssetMenu(menuName = "Puzzle Assets/Node Graph Base")]
+    [CreateAssetMenu(menuName = "SimpleNodeGraph/Node Graph Base")]
 
     [System.Serializable]
     public class NodeGraph : ScriptableObject

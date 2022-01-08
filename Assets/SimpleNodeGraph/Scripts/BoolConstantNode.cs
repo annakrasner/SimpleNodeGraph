@@ -4,14 +4,15 @@ using UnityEngine;
 
 namespace SimpleNodeGraph
 {
-    [Title("Float Value")]
-    public class FloatConstantNode : Node
+    [Title("Boolean Value")]
+    [NodeCategory("Constants")]
+    public class BoolConstantNode : Node
     {
         [SerializeField, Title("Value")]
-        public OutDataPin<float> outPin = new OutDataPin<float>();
+        public OutDataPin<bool> outPin = new OutDataPin<bool>();
 
         [SerializeField]
-        public float constant = 0f;
+        public bool constant = false;
 
         public override void OnTick()
         {
