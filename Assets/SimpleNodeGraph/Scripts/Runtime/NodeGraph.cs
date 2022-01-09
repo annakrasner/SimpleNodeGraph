@@ -59,10 +59,18 @@ namespace SimpleNodeGraph
 
             foreach (var n in nodes)
             {
+                List<Connection> nodeConnects = new List<Connection>();
+                foreach(var c in connections)
+                {
+                    if(c.node1 == n || c.node2 == n)
+                    {
+                        nodeConnects.Add(c);
+                    }
+                }
+                n.Init(this, nodeConnects);
                 if (n is EntryNode)
                 {
                     startNode = n;
-                    break;
                 }
 
             }

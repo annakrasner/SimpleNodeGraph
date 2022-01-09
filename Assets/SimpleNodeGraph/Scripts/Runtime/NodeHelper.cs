@@ -29,6 +29,27 @@ namespace SimpleNodeGraph
             return result;
         }
 
+        public static List<string> GetPinNames(Node target)
+        {
+            var result = new List<string>();
+            var parentType = target.GetType();
+
+            var fields = parentType.GetFields();
+            {
+
+                foreach (var fi in fields)
+                {
+                    System.Type ftype = fi.FieldType;
+                    if (ftype.IsSubclassOf(typeof(Pin)))
+                    {
+                        result.Add(fi.Name);
+                    }
+                }
+            }
+
+            return result;
+        }
+
         public static List<string> GetPinTitles(Node target)
         {
             var result = new List<string>();
@@ -62,6 +83,25 @@ namespace SimpleNodeGraph
             }
 
             return result;
+        }
+
+        public static string GetPinName(Node target, Pin pin)
+        {
+            var parentType = target.GetType();
+
+            var fields = parentType.GetFields();
+            {
+
+                foreach (var fi in fields)
+                {
+                    if((Pin)fi.GetValue(target) == pin )
+                    {
+                        return fi.Name;
+                    }
+                }
+            }
+
+            return "NAME NOT FOUND";
         }
 
     

@@ -18,7 +18,7 @@ namespace SimpleNodeGraph
         protected List<Pin> pinCache;
 
         //[HideInInspector]
-        [SerializeField]
+       // [SerializeField]
         public List<Connection> connections = new List<Connection>();
 
         public NodeGraph parent;
@@ -26,14 +26,16 @@ namespace SimpleNodeGraph
         protected Action<Pin> onReturnOutput;
 
 
-        public virtual void Init(NodeGraph parent)
+        public virtual void Init(NodeGraph parent, List<Connection> connections)
         {
             this.parent = parent;
+            this.connections = connections;
             pinCache = NodeHelper.GetPins(this);
+            var pinNames = NodeHelper.GetPinNames(this);
             for (int i = 0; i < pinCache.Count; i++)
             {
                 pinCache[i].node = this;
-                pinCache[i].index = i;
+                pinCache[i].name = pinNames[i];
             }
         }
 
@@ -66,14 +68,14 @@ namespace SimpleNodeGraph
                 {
                     for (int i = 0; i < connections.Count; i++) //this will fail horribly if we don't wait until each branch execution finishes. For now try to keep one to one connections
                     {
-                        if (connections[i].node1 == pin.node && connections[i].node1Ind == pin.index)
+                        if (connections[i].node1 == pin.node && connections[i].pin1Name == pin.name)
                         {
-                            var otherPin = connections[i].node2.GetPinAtIndex(connections[i].node2Ind);
+                            var otherPin = connections[i].node2.GetPinWithName(connections[i].pin2Name);
                             return connections[i].node2.PushData<T>(otherPin as OutDataPin<T>);
                         }
-                        else if (connections[i].node2 == pin.node && connections[i].node2Ind == pin.index)
+                        else if (connections[i].node2 == pin.node && connections[i].pin2Name == pin.name)
                         {
-                            var otherPin = connections[i].node1.GetPinAtIndex(connections[i].node1Ind);
+                            var otherPin = connections[i].node1.GetPinWithName(connections[i].pin1Name);
                             return connections[i].node1.PushData<T>(otherPin as OutDataPin<T>);
 
                         }
@@ -120,12 +122,12 @@ namespace SimpleNodeGraph
                     {
                         for (int i = 0; i < connections.Count; i++) //this will fail horribly if we don't wait until each branch execution finishes. For now try to keep one to one connections
                         {
-                            if (connections[i].node1 == result.node && connections[i].node1Ind == result.index)
+                            if (connections[i].node1 == result.node && connections[i].pin1Name == result.name)
                             {
                                 connections[i].node2.Execute();
                                 return;
                             }
-                            else if (connections[i].node2 == result.node && connections[i].node2Ind == result.index)
+                            else if (connections[i].node2 == result.node && connections[i].pin2Name == result.name)
                             {
                                 connections[i].node1.Execute();
                                 return;
@@ -160,142 +162,12 @@ namespace SimpleNodeGraph
             return pinCache;
         }
 
-
-        public Pin GetPinAtIndex(int i)
+        public Pin GetPinWithName(string name)
         {
-            if (i < 0 || i >= pinCache.Count)
-                Debug.LogError("Asked for out of range pin!");
-            return pinCache[i];
-        }
-
-    }
-
-    public enum PinType { None, 
-        //impulse pins
-        In, 
-        Out, 
-        InOut,
-        DataIn,
-        DataOut
-    }
-
-
-    [System.Serializable]
-    public class Pin
-    {
-        [SerializeField]
-        public int index = -1;
-
-        [SerializeField]
-        public PinType pinType { get; protected set; }
-
-        [SerializeField]
-        public Node node;
-
-
-    }
-
-
-    [System.Serializable]
-    public class InPin : Pin
-    {
-        public InPin()
-        {
-            pinType = PinType.In;
+            return pinCache.Find(item => item.name == name);
         }
     }
 
-    [System.Serializable]
-    public class OutPin : Pin
-    {
-
-
-        public OutPin()
-        {
-            pinType = PinType.Out;
-        }
-    }
-
-    public class DataPin<T>: Pin
-    {   
-    }
-
-    [System.Serializable]
-    public class InDataPin<T> : DataPin<T>
-    {
-        public InDataPin()
-        {
-            pinType = PinType.DataIn;
-        }
-
-        public T Data
-        {
-            get
-            {
-                return node.PullData<T>(this);
-            }
-        }
-    }
-
-    [System.Serializable]
-    public class OutDataPin<T> : DataPin<T>
-    {
-        protected T data;
-        
-        public T Data
-        {
-            get
-            {
-                return data;
-
-            }
-
-            set
-            {
-                data = value;
-            }
-        }
-
-        public OutDataPin()
-        {
-            pinType = PinType.DataOut;
-        }
-    }
-
-    [System.Serializable]
-    public class Connection : IDisposable
-    {
-        [SerializeField]
-        public Node node1;
-        public int node1Ind;
-
-        [SerializeField]
-        public Node node2;
-        public int node2Ind;
-
-
-        public Connection(Pin pin1, Pin pin2)
-        {
-            node1 = pin1.node;
-            node1Ind = pin1.index;
-
-            node2 = pin2.node;
-            node2Ind = pin2.index;
-
-            node1.connections.Add(this);
-            node2.connections.Add(this);
-        }
-
-        public void Clear()
-        {
-            node1.connections.Remove(this);
-            node2.connections.Remove(this);
-        }
-
-        public void Dispose()
-        {
-
-        }
-    }
+  
 
 }

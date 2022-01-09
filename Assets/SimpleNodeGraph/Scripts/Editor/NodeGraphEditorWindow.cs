@@ -76,7 +76,16 @@ namespace SimpleNodeGraph
 
                 if (n != null)
                 {
-                    n.Init(targetNodeGraph);
+                    List<Connection> nodeConnects = new List<Connection>();
+                    foreach (var c in targetNodeGraph.connections)
+                    {
+                        if (c.node1 == n || c.node2 == n)
+                        {
+                            nodeConnects.Add(c);
+                        }
+                    }
+
+                    n.Init(targetNodeGraph, nodeConnects);
                     nodeDrawers.Add(CreateNodeDrawer(n, n.graphPosition, NodeGraphStyles.nodeWidth, NodeGraphStyles.nodeHeight, OnPinClick, OnClickRemoveNode, OnClickCopyNode));
                 }
 
@@ -94,7 +103,7 @@ namespace SimpleNodeGraph
                 //    pin1Drawer = node1Drawer.pinDrawers.Find(p_item => p_item.target == c.pin1);
                 foreach(var pd in node1Drawer.pinDrawers)
                     {
-                        if (pd.target.index == c.node1Ind)
+                        if (pd.target.name == c.pin1Name)
                             pin1Drawer = pd;
                     }
 
@@ -103,7 +112,7 @@ namespace SimpleNodeGraph
 
                     foreach (var pd in node2Drawer.pinDrawers)
                     {
-                        if (pd.target.index == c.node2Ind)
+                        if (pd.target.name == c.pin2Name)
                             pin2Drawer = pd;
                     }
 
@@ -421,7 +430,7 @@ namespace SimpleNodeGraph
             {
 
                 nodeClipboard.graphPosition = mousePosition;
-                nodeClipboard.Init(targetNodeGraph);
+                nodeClipboard.Init(targetNodeGraph, new List<Connection>());
                 AssetDatabase.AddObjectToAsset(nodeClipboard, targetNodeGraph);
                 CreateAndAddNodeDrawer(nodeClipboard, nodeClipboard.graphPosition);
             }
@@ -490,7 +499,7 @@ namespace SimpleNodeGraph
 
                 var obj = ScriptableObject.CreateInstance(type.Name);
                 var node = obj as Node;
-                node.Init(targetNodeGraph);
+                node.Init(targetNodeGraph, new List<Connection>());
                 node.graphPosition = position;
 
                 AssetDatabase.AddObjectToAsset(node, targetNodeGraph);

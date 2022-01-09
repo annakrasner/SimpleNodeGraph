@@ -21,7 +21,7 @@ namespace SimpleNodeGraph
         protected override void OnEnter()
         {
             Debug.Log(inputString.Data);
-            OutputPin(outPin);
+            OutputPin(outPin);  
         }
 
         public override void OnTick()
